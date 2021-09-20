@@ -14,25 +14,33 @@ class PeopleController extends Controller
     }
 
     public function search(Request $request , $id) {
-        $response = [];
+        $response = ['filters' => []];
+
+        $validator = [
+            "name" => "nullable|string:100",
+            "height" => "nullable|string:100",
+            "mass" => "nullable|string:100",
+            "hair_color" => "nullable|string:100",
+            "skin_color" => "nullable|string:100",
+            "eye_color" => "nullable|string:100",
+            "birth_year" => "nullable|string:100",
+            "gender" => "nullable|string:100",
+            "homeworld" => "nullable|string:100",
+            "order" => "nullable|string:100",
+        ];
+
+        $valid = $request->validate($validator);
 
         $query = Person::when($id != null && is_numeric($id), function($query) use($id) {
             $query->where('id', '=', $id );
-        })->when($request->has('order'),function($query) use($request) {
+        })->when(array_key_exists('order', $valid) , function($query) use($request) {
             $query->orderBy($request->order);
         });
 
-        $filters = ["name","height","mass","hair_color","skin_color","eye_color","birth_year","gender","homeworld"];
-        foreach ($filters as $key => $value) {
-            $response[$value] = '';
+        foreach ($valid as $key => $value) {
+            $response['filters'][$key] = $value;
+            $query->where($key, 'like', "%$value%");
         }
-        foreach ($request->all() as $key => $value) {
-            if (in_array($key, $filters)) {
-                $response[$key] = $value;
-                $query->where($key, 'like', "%$value%");
-            }
-        }
-
         if (is_numeric($id)) {
             $response['id'] = $id;
         }
