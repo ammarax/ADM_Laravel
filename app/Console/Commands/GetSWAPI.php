@@ -16,7 +16,7 @@ class GetSWAPI extends Command
      *
      * @var string
      */
-    protected $signature = 'get:SWAPI';
+    protected $signature = 'swapi:get';
 
     /**
      * The console command description.

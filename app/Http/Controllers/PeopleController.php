@@ -16,6 +16,7 @@ class PeopleController extends Controller
     public function search(Request $request , $id) {
         $response = ['filters' => []];
 
+        // could be replaced with Rule
         $validator = [
             "name" => "nullable|string:100",
             "height" => "nullable|string:100",
@@ -31,23 +32,26 @@ class PeopleController extends Controller
 
         $valid = $request->validate($validator);
 
-        $query = Person::when($id != null && is_numeric($id), function($query) use($id) {
+        $query = Person::when($id != null && is_numeric($id), function($query) use (&$id) {
             $query->where('id', '=', $id );
-        })->when(array_key_exists('order', $valid) , function($query) use($request) {
-            $query->orderBy($request->order);
+        })->when(array_key_exists('order', $valid) , function($query) use (&$valid, &$response) {
+            $query->orderBy($valid['order']);
+            $response['order'] = $valid['order']; // for debug purpose
+            unset($valid['order']);
         });
 
         foreach ($valid as $key => $value) {
-            $response['filters'][$key] = $value;
+            $response['filters'][$key] = $value; // for debug purpose
             $query->where($key, 'like', "%$value%");
         }
         if (is_numeric($id)) {
-            $response['id'] = $id;
+            $response['id'] = $id; // for debug purpose
         }
         $response['data'] = $query->get();
         return $response ;
     }
 
+    //for debug purpose
     public function truncate() {
         Person::truncate();
         return response()->json(['truncate' => 'OK'], 200);
